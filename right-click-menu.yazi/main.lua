@@ -13,6 +13,10 @@ local get_index = ya.sync(function(state)
     return state.index
 end)
 
+local get_terminal = ya.sync(function(state)
+	return state.terminal
+end)
+
 local get_hovered = ya.sync(function()
     local h = cx.active.current.hovered
     if not h then
@@ -49,11 +53,12 @@ local function build_exec(exec, path)
     return exec
 end
 
-local function entry(_, job)
+local function entry()
+    local terminalEmulator  = get_terminal()
     local file = get_hovered()
     if not file then
         return
-    end
+    end    
 
     local cands, actions = {}, {}
     local function add(key, desc, action)
@@ -105,7 +110,7 @@ local function entry(_, job)
             end
             child:wait()
         else
-            local child, err = Command("wezterm")
+            local child, err = Command(terminalEmulator)
                 :arg("start")
                 :arg("--always-new-process")
                 :arg("--")
@@ -122,8 +127,9 @@ local function entry(_, job)
     end
 end
 
-local function setup()
+local function setup(state, options)
     local original_entity_click = Entity.click
+    state.terminal = options.terminal
 
     local cached = get_index()
     if not cached then
